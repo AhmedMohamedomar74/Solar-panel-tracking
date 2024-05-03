@@ -1,46 +1,84 @@
-#include "../MCAL/ADC.h"
+#include "../HAL/Ameter.h"
 #include "../MCAL/UART.h"
+#include "../HAL/SERVO.h"
 
-#define F_CPU 8000000UL			/* Define frequency here its 8MHz */
-//#define USART_BAUDRATE 9600
+void chec_Arr(unsigned char *arr);
+void Plot_fun(Measaure_t Measure);
+void Automatic_control(signed char *angle_value);
 
-
-#define First_resistance 10000
-#define Second_resistance 1000
-#define Voltage_Reff 5
-
-typedef struct measument {
-    float voltage_measument;
-    float current_measument;
-    float Power_measurment;
-} Measaure_t;
-
-Measaure_t Measured_voltage(unsigned int adc_value);
-
-int main() {
-    ADC_INIT();
+#define ADC_CHANELL 2
+signed char angle_value = 0;
+int main()
+{
     UART_init(9600);
-    unsigned char eight_bit_var = ADC_READ(2);
-    Measaure_t Measure = Measured_voltage(eight_bit_var);
-    while (1) {
-        switch (UART_RxChar())
-        {
-        case 'R':
-            UART_TX_Float(Measure.voltage_measument);
-            UART_TX_Float(Measure.current_measument);
-            UART_TX_Float(Measure.Power_measurment);
-            break;
-        
-        default:
-            break;
-        }
+    Ameter_init();
+    servo_int();
+    while (1)
+    {
+        chec_Arr(Rec_arr);
     }
 }
 
-Measaure_t Measured_voltage(unsigned int adc_value) {
-    Measaure_t temp;
-    temp.voltage_measument = ((float)adc_value * Voltage_Reff / 1023.0) * (First_resistance + Second_resistance) / Second_resistance;
-    temp.current_measument = temp.voltage_measument / (First_resistance + Second_resistance);
-    temp.Power_measurment = temp.voltage_measument * temp.current_measument;
-    return temp;
+void Plot_fun(Measaure_t Measure)
+{
+    UART_TX_Float(Measure.voltage_measument);
+    UART_TX_Float(Measure.current_measument);
+    UART_TX_Float(Measure.Power_measurment);
+}
+
+void Automatic_control(signed char *angle_value)
+{
+    unsigned int Read_lift = ADC_READ(0);
+    unsigned int Read_right = ADC_READ(1);
+    int tol = 50;
+    int differance_H = Read_lift - Read_right;
+    if ((differance_H > tol) || (differance_H < (-1 * tol)))
+    {
+        if (Read_lift > Read_right)
+        {
+            *(angle_value) = ++*(angle_value);
+            if (*(angle_value) > 90)
+            {
+                *(angle_value) = 90;
+            }
+        }
+        else if (Read_lift < Read_right)
+        {
+            *(angle_value) = --*(angle_value);
+            if (*(angle_value) < -90)
+            {
+                *(angle_value) = -90;
+            }
+        }
+        servo_move(*(angle_value));
+    }
+}
+
+void chec_Arr(unsigned char *arr)
+{
+    switch (arr[0])
+    {
+    case 'A':
+        Automatic_control(&angle_value);
+        break;
+
+    case 'M':
+        servo_move((signed char)arr[1]);
+        break;
+
+    default:
+        break;
+    }
+
+    switch (arr[2])
+    {
+    case 'P':
+    	{
+    		Measaure_t Measure_adc =  Measured_voltage(ADC_CHANELL);
+    		Plot_fun(Measure_adc);
+    	}
+        break;
+    default:
+        break;
+    }
 }
