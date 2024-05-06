@@ -1,84 +1,32 @@
-#include "../HAL/Ameter.h"
 #include "../MCAL/UART.h"
-#include "../HAL/SERVO.h"
+#include "../MCAL/ADC.h"
 
-void chec_Arr(unsigned char *arr);
-void Plot_fun(Measaure_t Measure);
-void Automatic_control(signed char *angle_value);
+#define First_resistance 10000
+#define Second_resistance 5000
+#define Voltage_Reff 4.15
 
-#define ADC_CHANELL 2
-signed char angle_value = 0;
+unsigned char REC_var;
+
 int main()
 {
     UART_init(9600);
-    Ameter_init();
-    servo_int();
+    ADC_INIT();
     while (1)
     {
-        chec_Arr(Rec_arr);
-    }
-}
-
-void Plot_fun(Measaure_t Measure)
-{
-    UART_TX_Float(Measure.voltage_measument);
-    UART_TX_Float(Measure.current_measument);
-    UART_TX_Float(Measure.Power_measurment);
-}
-
-void Automatic_control(signed char *angle_value)
-{
-    unsigned int Read_lift = ADC_READ(0);
-    unsigned int Read_right = ADC_READ(1);
-    int tol = 50;
-    int differance_H = Read_lift - Read_right;
-    if ((differance_H > tol) || (differance_H < (-1 * tol)))
-    {
-        if (Read_lift > Read_right)
+        if (REC_var == 'A')
         {
-            *(angle_value) = ++*(angle_value);
-            if (*(angle_value) > 90)
-            {
-                *(angle_value) = 90;
-            }
+            float voltage = ((float)ADC_READ(2) * Voltage_Reff / 1023.0) * (First_resistance + Second_resistance) / Second_resistance;
+            UART_TX_Float(voltage);
+            float current = voltage / (First_resistance + Second_resistance);
+            UART_TX_Float(current);
+            float Power = voltage * current;
+            UART_TX_Float(Power);
+            REC_var = 0;
         }
-        else if (Read_lift < Read_right)
-        {
-            *(angle_value) = --*(angle_value);
-            if (*(angle_value) < -90)
-            {
-                *(angle_value) = -90;
-            }
-        }
-        servo_move(*(angle_value));
     }
 }
 
-void chec_Arr(unsigned char *arr)
+ISR(USART_RXC_vect)
 {
-    switch (arr[0])
-    {
-    case 'A':
-        Automatic_control(&angle_value);
-        break;
-
-    case 'M':
-        servo_move((signed char)arr[1]);
-        break;
-
-    default:
-        break;
-    }
-
-    switch (arr[2])
-    {
-    case 'P':
-    	{
-    		Measaure_t Measure_adc =  Measured_voltage(ADC_CHANELL);
-    		Plot_fun(Measure_adc);
-    	}
-        break;
-    default:
-        break;
-    }
+    REC_var = UDR;
 }

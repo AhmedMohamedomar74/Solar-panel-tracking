@@ -6,11 +6,11 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
 
 # Function to read three float values from UART
-def read_three_floats_from_uart(port='COM1', baudrate=9600):
+def read_three_floats_from_uart(port='COM10', baudrate=9600):
     try:
         with serial.Serial(port, baudrate, timeout=1) as ser:
             print("Sending 'R' to UART")
-            ser.write(b'R')  # Send the character 'R' to request data
+            ser.write(b'A')  # Send the character 'R' to request data
 
             # Read 12 bytes from UART (3 floats * 4 bytes each)
             byte_data = ser.read(12)

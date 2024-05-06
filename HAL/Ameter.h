@@ -10,15 +10,15 @@
 
 #include "../MCAL/ADC.h"
 
-#define F_CPU 8000000UL			/* Define frequency here its 8MHz */
-//#define USART_BAUDRATE 9600
-
+#define F_CPU 8000000UL /* Define frequency here its 8MHz */
+// #define USART_BAUDRATE 9600
 
 #define First_resistance 10000
-#define Second_resistance 1000
-#define Voltage_Reff 5
+#define Second_resistance 5000
+#define Voltage_Reff 4.15f
 
-typedef struct measument {
+typedef struct measument
+{
     float voltage_measument;
     float current_measument;
     float Power_measurment;
