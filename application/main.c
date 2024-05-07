@@ -1,46 +1,124 @@
-#include "../MCAL/ADC.h"
-#include "../MCAL/UART.h"
+#include "../HAL/multimeter.h"
+#include "../HAL/SERVO.h"
 
-#define F_CPU 8000000UL			/* Define frequency here its 8MHz */
-//#define USART_BAUDRATE 9600
+// Definitions
+#define BUFFER_SIZE 3
 
+// Global variables
+signed char angle_value = 0;
+unsigned char Rec_arr[BUFFER_SIZE];
+unsigned char counter = 0;
+volatile unsigned char data_available = 0; // Flag to indicate data availability
+signed char angle = 0;
 
-#define First_resistance 10000
-#define Second_resistance 1000
-#define Voltage_Reff 5
+// Function prototypes
+void Automatic_control(signed char *angle_value);
+void check_Arr(unsigned char *arr);
 
-typedef struct measument {
-    float voltage_measument;
-    float current_measument;
-    float Power_measurment;
-} Measaure_t;
-
-Measaure_t Measured_voltage(unsigned int adc_value);
-
-int main() {
-    ADC_INIT();
+int main()
+{
+    // Initialization
     UART_init(9600);
-    unsigned char eight_bit_var = ADC_READ(2);
-    Measaure_t Measure = Measured_voltage(eight_bit_var);
-    while (1) {
-        switch (UART_RxChar())
+    multimeterInit();
+    servo_int();
+    // Main loop
+    while (1)
+    {
+        // Check if data is available
+        if (data_available)
         {
-        case 'R':
-            UART_TX_Float(Measure.voltage_measument);
-            UART_TX_Float(Measure.current_measument);
-            UART_TX_Float(Measure.Power_measurment);
-            break;
-        
-        default:
-            break;
+            // Process received data
+            if (Rec_arr[2] == 0x50)
+            {
+                // Process the ADC_READ(3) based on the 'p' command
+                // int val_adc = 0x03FF & ADC_READ(3);
+                UART_TX_int(ADC_READ(3));
+            }
+            // 41ff50 4d2d50
+            if (Rec_arr[0] == 0x41)
+            {
+                Automatic_control(&angle);
+            }
+            else if (Rec_arr[0] == 0x4d)
+            {
+                servo_move(Rec_arr[1]);
+            }
+
+            // Reset data availability flag and counter after processing
+            data_available = 0;
+            counter = 0;
         }
     }
 }
 
-Measaure_t Measured_voltage(unsigned int adc_value) {
-    Measaure_t temp;
-    temp.voltage_measument = ((float)adc_value * Voltage_Reff / 1023.0) * (First_resistance + Second_resistance) / Second_resistance;
-    temp.current_measument = temp.voltage_measument / (First_resistance + Second_resistance);
-    temp.Power_measurment = temp.voltage_measument * temp.current_measument;
-    return temp;
+void Automatic_control(signed char *angle_value)
+{
+    unsigned int Read_lift = ADC_READ(0);
+    unsigned int Read_right = ADC_READ(1);
+    int tol = 20;
+    int difference_H = Read_lift - Read_right;
+    if ((difference_H > tol) || (difference_H < (-1 * tol)))
+    {
+        if (Read_lift > Read_right)
+        {
+            (*angle_value)++;
+            if (*angle_value > 90)
+            {
+                *angle_value = 90;
+            }
+        }
+        else if (Read_lift < Read_right)
+        {
+            (*angle_value)--;
+            if (*angle_value < -90)
+            {
+                *angle_value = -90;
+            }
+        }
+        servo_move(*angle_value);
+    }
+}
+
+void check_Arr(unsigned char *arr)
+{
+    // Process commands in arr[0] and arr[2]
+    switch (arr[0])
+    {
+    case 'A':
+        Automatic_control(&angle_value);
+        break;
+
+    case 'M':
+        servo_move((signed char)arr[1]);
+        break;
+
+    default:
+        break;
+    }
+
+    if (arr[2] == 'p')
+    {
+        UART_TX_int(ADC_READ(3));
+    }
+}
+
+ISR(USART_RXC_vect)
+{
+    if (counter < BUFFER_SIZE)
+    {
+        // Store received data in array
+        Rec_arr[counter] = UDR;
+        counter++;
+
+        // If 3 bytes are received, set data availability flag
+        if (counter == BUFFER_SIZE)
+        {
+            data_available = 1;
+        }
+    }
+    else
+    {
+        // Reset counter if it goes out of bounds (safety measure)
+        counter = 0;
+    }
 }

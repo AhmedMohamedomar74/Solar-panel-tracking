@@ -9,7 +9,6 @@
 void UART_init(long USART_BAUDRATE);
 unsigned char UART_RxChar();
 void UART_TxChar(char ch);
+void UART_SendString(char *str);
 void UART_TX_Float(float F_val);
-
-
-extern unsigned char REC_char;
+void UART_TX_int(unsigned int unsignedint_val);
