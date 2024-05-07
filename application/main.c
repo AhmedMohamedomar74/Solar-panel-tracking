@@ -1,5 +1,6 @@
 #include "../HAL/multimeter.h"
 #include "../HAL/SERVO.h"
+#include <math.h>
 
 // Definitions
 #define BUFFER_SIZE 3
@@ -35,46 +36,60 @@ int main()
                 UART_TX_int(ADC_READ(3));
             }
             // 41ff50 4d2d50
-            if (Rec_arr[0] == 0x41)
-            {
-                Automatic_control(&angle);
-            }
-            else if (Rec_arr[0] == 0x4d)
-            {
-                servo_move(Rec_arr[1]);
-            }
+            // if (Rec_arr[0] == 0x41)
+            // {
+            //     Automatic_control(&angle);
+            // }
+            // else if (Rec_arr[0] == 0x4d)
+            // {
+            //     servo_move(Rec_arr[1]);
+            // }
 
             // Reset data availability flag and counter after processing
             data_available = 0;
             counter = 0;
+        }
+        if (0xff == Rec_arr[1])
+        {
+            Automatic_control(&angle);
+        }
+        else
+        {
+            servo_move(Rec_arr[1]);
         }
     }
 }
 
 void Automatic_control(signed char *angle_value)
 {
-    unsigned int Read_lift = ADC_READ(0);
-    unsigned int Read_right = ADC_READ(1);
-    int tol = 20;
-    int difference_H = Read_lift - Read_right;
-    if ((difference_H > tol) || (difference_H < (-1 * tol)))
+    unsigned int readLeft = ADC_READ(1);
+    unsigned int readRight = ADC_READ(2);
+    int tolerance = 20;
+    int difference = readLeft - readRight;
+
+    // Check if the difference is within the tolerance
+    if (abs(difference) > tolerance)
     {
-        if (Read_lift > Read_right)
+        if (difference > 0)
         {
             (*angle_value)++;
-            if (*angle_value > 90)
-            {
-                *angle_value = 90;
-            }
         }
-        else if (Read_lift < Read_right)
+        else
         {
             (*angle_value)--;
-            if (*angle_value < -90)
-            {
-                *angle_value = -90;
-            }
         }
+
+        // Constrain the angle within the range of -90 to 90 degrees
+        if (*angle_value > 90)
+        {
+            *angle_value = 90;
+        }
+        else if (*angle_value < -90)
+        {
+            *angle_value = -90;
+        }
+
+        // Move the servo to the new angle
         servo_move(*angle_value);
     }
 }

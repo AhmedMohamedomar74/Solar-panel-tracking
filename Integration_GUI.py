@@ -235,6 +235,7 @@ class AppWindow(QWidget):
         # Read 2 bytes from UART (16-bit integer)
         try:
             incoming_bytes = ser.read(2)
+            print(f"incoming_bytes = {incoming_bytes}")
             if len(incoming_bytes) == 2:
                 # Unpack the integer value from the 2-byte data
                 int_value = struct.unpack('<H', incoming_bytes)[0]
