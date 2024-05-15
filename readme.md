@@ -54,7 +54,7 @@ The project's GUI provides two buttons for interacting with the solar panel trac
         * The servo motor will then adjust the solar panel to match the specified angle.
         * GIF demonstrating Manual Mode
 
-    ![Manual Mode GIF](Gifs\manual_mode.gif)
+    ![Manual Mode GIF](Gifs/manual_mode.gif)
 
     * In **Automatic Mode:**
         * GIF demonstrating Automatic Mode
