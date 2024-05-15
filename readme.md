@@ -59,7 +59,7 @@ The project's GUI provides two buttons for interacting with the solar panel trac
     * In **Automatic Mode:**
         * GIF demonstrating Automatic Mode
 
-![Automatic Mode GIF](Gifs\automatic_mode_Reduced.gif)
+![Automatic Mode GIF](Gifs/automatic_mode_Reduced.gif)
 
 * **Second Button:**
     * Clicking the button once initiates **Plot Mode**.
@@ -68,7 +68,7 @@ The project's GUI provides two buttons for interacting with the solar panel trac
         * Note: The measurements for power, voltage, and current will increase as the light to the solar panel increases.
         * GIF demonstrating Plot Mode
 
-    ![Plot Mode GIF](Gifs\Plot_mode_reduced.gif)
+    ![Plot Mode GIF](Gifs/Plot_mode_reduced.gif)
 
     * Clicking the button again stops the data plotting (**Stop Plot Mode**).
 
