@@ -49,13 +49,27 @@ The project's GUI provides two buttons for interacting with the solar panel trac
 
 * **First Button:**
     * Toggles between **Manual** and **Automatic** modes.
-    * In **Manual Mode**:
+    * In **Manual Mode:**
         * Enter a desired angle in the designated field within the GUI.
         * The servo motor will then adjust the solar panel to match the specified angle.
+        * GIF demonstrating Manual Mode
+
+    ![Manual Mode GIF](Gifs\manual_mode.gif)
+
+    * In **Automatic Mode:**
+        * GIF demonstrating Automatic Mode
+
+![Automatic Mode GIF](Gifs\automatic_mode_Reduced.gif)
+
 * **Second Button:**
     * Clicking the button once initiates **Plot Mode**.
-    * In **Plot Mode**:
+    * In **Plot Mode:**
         * The GUI starts plotting voltage, current, and power data from the solar panel in real-time.
+        * Note: The measurements for power, voltage, and current will increase as the light to the solar panel increases.
+        * GIF demonstrating Plot Mode
+
+    ![Plot Mode GIF](Gifs\Plot_mode_reduced.gif)
+
     * Clicking the button again stops the data plotting (**Stop Plot Mode**).
 
 
